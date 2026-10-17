@@ -1,0 +1,1 @@
+const {user,deny}=require('../_lib');module.exports=(req,res)=>{res.setHeader('Cache-Control','no-store');if(req.method!=='GET')return deny(res,405,'Method not allowed');const u=user(req);if(!u)return deny(res,401,'Not signed in');res.status(200).json({user:u})};
