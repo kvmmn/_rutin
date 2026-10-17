@@ -17,6 +17,20 @@ module.exports=async(req,res)=>{
    const r=await request(token,dailyRange);
    return res.json((r.values||[]).filter(x=>validDate(x[0])).map(x=>({date:x[0],weight:x[2]??'',notes:x[10]||'',purchase:x[8]||''})));
   }
+  if(action==='getInventory'&&req.method==='GET'){
+   const r=await request(token,"'موجودی خانه'!A2:F100");
+   return res.json((r.values||[]).filter(x=>x[0]).map(x=>({id:String(x[0]),name:String(x[1]||''),quantity:Number(x[2])||0,unit:String(x[3]||''),updatedAt:String(x[4]||'')})));
+  }
+  if(action==='saveInventory'&&req.method==='POST'){
+   const entry=args[0],ids=['bread','rice','tuna','potatoes','eggs','chicken','skyr','cheese','fresh','salad','vegetables','fruit'];
+   if(!entry||!ids.includes(entry.id)||!Number.isFinite(Number(entry.quantity))||Number(entry.quantity)<0||Number(entry.quantity)>100000)return deny(res,400,'Invalid inventory');
+   const r=await request(token,"'موجودی خانه'!A2:F100"),rows=r.values||[];
+   const found=rows.findIndex(x=>x[0]===entry.id);
+   const next=[entry.id,safe(entry.name),Number(entry.quantity),safe(entry.unit),new Date().toISOString(),''];
+   const row=found>=0?found+2:rows.length+2;
+   await request(token,"'موجودی خانه'!A"+row+":F"+row,'PUT',[next]);
+   return res.json({ok:true,entry:{id:entry.id,name:next[1],quantity:next[2],unit:next[3],updatedAt:next[4]}});
+  }
   if(action==='getExpenseReceipts'&&req.method==='GET'){
    const [r,i]=await Promise.all([request(token,receiptRange),request(token,itemRange)]);
    const rows=(r.values||[]).slice(1),items=(i.values||[]).slice(1);
