@@ -22,7 +22,7 @@ module.exports=async(req,res)=>{
    return res.json((r.values||[]).filter(x=>x[0]).map(x=>({id:String(x[0]),name:String(x[1]||''),quantity:Number(x[2])||0,unit:String(x[3]||''),updatedAt:String(x[4]||'')})));
   }
   if(action==='saveInventory'&&req.method==='POST'){
-   const entry=args[0],ids=['bread','rice','tuna','potatoes','eggs','chicken','skyr','cheese','fresh','salad','vegetables','fruit'];
+   const entry=args[0],ids=['bread','rice','tuna','potatoes','eggs','chicken','skyr','cheese','fresh','salad','vegetables','fruit','salt','pepper','oil','lemon'];
    if(!entry||!ids.includes(entry.id)||!Number.isFinite(Number(entry.quantity))||Number(entry.quantity)<0||Number(entry.quantity)>100000)return deny(res,400,'Invalid inventory');
    const r=await request(token,"'موجودی خانه'!A2:F100"),rows=r.values||[];
    const found=rows.findIndex(x=>x[0]===entry.id);
