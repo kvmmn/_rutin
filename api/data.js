@@ -37,11 +37,15 @@ module.exports=async(req,res)=>{
    return res.json(rows.filter(x=>x[0]).map(x=>({id:String(x[0]),date:String(x[1]||''),shop:String(x[2]||''),total:Number(x[3])||0,related:Number(x[4])||0,items:items.filter(y=>y[0]===x[0]).map(y=>({name:String(y[3]||''),qty:Number(y[5])||0,unit:Number(y[6])||0,related:String(y[8]).toLowerCase()==='true'}))})));
   }
   if(req.method!=='POST')return deny(res,405,'Method not allowed');
-  if(['saveDailyWeight','appendDailyNote','savePurchaseStatus'].includes(action)){
+  if(['saveDailyWeight','deleteDailyWeight','appendDailyNote','savePurchaseStatus'].includes(action)){
    const date=args[0];if(!validDate(date))return deny(res,400,'Invalid date');
    const r=await request(token,dailyRange),rows=r.values||[],idx=rows.findIndex(x=>x[0]===date);
    if(idx<0)return deny(res,400,'Date not in sheet');
    const row=idx+2;
+   if(action==='deleteDailyWeight'){
+    await request(token,"'روزانه'!C"+row,'PUT',[['']]);
+    return res.json({ok:true,date,weight:null});
+   }
    if(action==='saveDailyWeight'){
     const w=Number(args[1]);if(!Number.isFinite(w)||w<25||w>350)return deny(res,400,'Invalid weight');
     await request(token,"'روزانه'!C"+row,'PUT',[[w]]);
