@@ -1,4 +1,4 @@
-const {user,deny}=require('./_lib');
+const {user,deny,allowOrigin}=require('./_lib');
 const {accessToken,request}=require('./_sheets');
 const validDate=v=>/^20\d\d-\d\d-\d\d$/.test(String(v));
 const safe=v=>String(v??'').slice(0,1200).replace(/^[=+@-]/,"'");
@@ -9,7 +9,7 @@ module.exports=async(req,res)=>{
  res.setHeader('Cache-Control','no-store');
  if(!user(req))return deny(res,401,'Sign in with Google first');
  if(!['GET','POST'].includes(req.method))return deny(res,405,'Method not allowed');
- if(req.method==='POST'&&req.headers.origin&&req.headers.origin!=='https://rutin274.vercel.app')return deny(res,403,'Bad origin');
+ if(req.method==='POST'&&!allowOrigin(req))return deny(res,403,'Bad origin');
  const action=req.method==='GET'?req.query.action:req.body?.action,args=req.body?.args||[];
  try{
   const token=await accessToken();

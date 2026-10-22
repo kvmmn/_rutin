@@ -14,6 +14,12 @@ Personal **meal-habit companion**: plan meals, grocery, and get **proactive food
 - Server cron every 5 minutes (`/api/cron/meal-nudges`) using meal plan + clock (Europe/Berlin)
 - Google Calendar: **not** in MVP
 
+## Temporary: login off
+
+Google sign-in is **disabled by default** for preview (`AUTH_DISABLED` defaults to `true`). Meal plan, cook sheet, and settings open without login. Sheets still uses the service account (no user OAuth).
+
+**Re-enable login:** set `AUTH_DISABLED=false` in Vercel env and redeploy.
+
 ## Setup (Vercel)
 
 1. Import `kvmmn/_rutin` into Vercel (Framework: Other, root `./`).

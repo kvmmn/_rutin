@@ -65,8 +65,20 @@ body.rutin-authorized #rutin-auth{display:none}
    document.body.append(box);
    try{
      const r=await fetch('/api/auth/me',{cache:'no-store',credentials:'same-origin'});
-     if(!r.ok)throw Error('Sign-in required');
-     document.body.classList.add('rutin-authorized');
+     const data=await r.json().catch(()=>({}));
+     // AUTH_DISABLED (default true for preview): open app without Google sign-in
+     if(r.ok||data.authDisabled){
+       document.body.classList.add('rutin-authorized');
+       if(data.authDisabled){
+         const tip=document.createElement('div');
+         tip.id='rutin-auth-off-note';
+         tip.style.cssText='position:fixed;bottom:10px;left:10px;right:10px;z-index:50;text-align:center;font-size:11px;color:#6a7a70;pointer-events:none';
+         tip.textContent='ورود موقتاً خاموش است (AUTH_DISABLED)';
+         document.body.append(tip);
+       }
+       return;
+     }
+     throw Error('Sign-in required');
    }catch{
      document.getElementById('rutin-auth-text').textContent='برای دسترسی به اطلاعات شخصی وارد حساب Google مجاز شو.';
      const btn=document.getElementById('rutin-login');btn.style.display='inline-block';btn.onclick=()=>location.assign('/api/auth/login');

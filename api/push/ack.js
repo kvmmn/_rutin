@@ -1,11 +1,11 @@
-const { user, deny, ORIGIN } = require('../_lib');
+const { user, deny, allowOrigin } = require('../_lib');
 const { saveAck } = require('../_push');
 
 module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return deny(res, 405, 'Method not allowed');
   if (!user(req)) return deny(res, 401, 'Sign in with Google first');
-  if (req.headers.origin && req.headers.origin !== ORIGIN) return deny(res, 403, 'Bad origin');
+  if (!allowOrigin(req)) return deny(res, 403, 'Bad origin');
 
   const { id, kind } = req.body || {};
   if (!id || typeof id !== 'string' || id.length > 80) return deny(res, 400, 'Invalid id');

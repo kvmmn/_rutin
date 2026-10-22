@@ -1,4 +1,4 @@
-const { user, deny, ORIGIN } = require('../_lib');
+const { user, deny, allowOrigin } = require('../_lib');
 const { configured, saveSubscription } = require('../_push');
 const { defaultSettings } = require('../_meals');
 
@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'POST') return deny(res, 405, 'Method not allowed');
   if (!user(req)) return deny(res, 401, 'Sign in with Google first');
-  if (req.headers.origin && req.headers.origin !== ORIGIN) return deny(res, 403, 'Bad origin');
+  if (!allowOrigin(req)) return deny(res, 403, 'Bad origin');
   if (!configured()) return deny(res, 503, 'Web Push is not configured (VAPID keys missing)');
 
   const body = req.body || {};
