@@ -6,6 +6,23 @@
 @media(max-width:360px){main{padding-inline:12px}.top .pill{font-size:10px;padding-inline:8px}.tabs button{font-size:10px}.days{margin-inline:-12px;padding-inline:12px}.settings-grid,.weight-grid{grid-template-columns:1fr}.live-actions{flex-direction:column}.live-actions button{width:100%}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important}}
 
+/* Cook deep-link (one meal, one action) */
+.cook-sheet{position:fixed;inset:0;z-index:9000;background:linear-gradient(165deg,#f4f7f3 0%,#eef3ee 45%,#f8f8f6 100%);overflow:auto;padding:20px 18px calc(28px + env(safe-area-inset-bottom));display:none}
+.cook-sheet.open{display:block}
+.cook-sheet .cook-inner{max-width:520px;margin:0 auto}
+.cook-sheet .cook-top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:18px}
+.cook-sheet .cook-top button{border:1px solid #d5ddd6;background:#fff;border-radius:11px;padding:10px 14px;font-weight:700;font-size:12px;color:#2a4a3a;cursor:pointer}
+.cook-sheet .cook-kicker{font-size:12px;color:#6a7a70;margin:0 0 6px}
+.cook-sheet h1{font-size:clamp(22px,5vw,28px);line-height:1.55;margin:0 0 8px;letter-spacing:-.03em}
+.cook-sheet .cook-meta{font-size:12px;color:#4d6558;margin:0 0 18px}
+.cook-sheet ol.cook-steps{margin:0;padding:0 22px 0 0;font-size:14px;line-height:2;color:#24362c}
+.cook-sheet ol.cook-steps li{margin:0 0 8px}
+.cook-sheet .cook-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:26px;position:sticky;bottom:12px}
+.cook-sheet .cook-actions button{flex:1;min-width:140px;border-radius:12px;padding:14px 16px;font-weight:750;font-size:13px;border:1px solid transparent;cursor:pointer}
+.cook-sheet .cook-actions .primary{background:#285440;color:#fff}
+.cook-sheet .cook-actions .ghost{background:#fff;border-color:#c9d6cc;color:#285440}
+.cook-sheet .cook-status{font-size:12px;color:#5a6e62;margin-top:12px;min-height:1.2em}
+
 /* Guided meals & shopping */
 .meal-guide{margin-top:15px;padding-top:14px;border-top:1px solid var(--line)}
 .ingredient-list{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0}.ingredient{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:#f4f6f2;border:1px solid #edf0eb;border-radius:9px;font-size:11px;color:#3a5344;line-height:1.75}.ingredient .sym{font-size:17px}
@@ -48,8 +65,20 @@ body.rutin-authorized #rutin-auth{display:none}
    document.body.append(box);
    try{
      const r=await fetch('/api/auth/me',{cache:'no-store',credentials:'same-origin'});
-     if(!r.ok)throw Error('Sign-in required');
-     document.body.classList.add('rutin-authorized');
+     const data=await r.json().catch(()=>({}));
+     // AUTH_DISABLED (default true for preview): open app without Google sign-in
+     if(r.ok||data.authDisabled){
+       document.body.classList.add('rutin-authorized');
+       if(data.authDisabled){
+         const tip=document.createElement('div');
+         tip.id='rutin-auth-off-note';
+         tip.style.cssText='position:fixed;bottom:10px;left:10px;right:10px;z-index:50;text-align:center;font-size:11px;color:#6a7a70;pointer-events:none';
+         tip.textContent='ورود موقتاً خاموش است (AUTH_DISABLED)';
+         document.body.append(tip);
+       }
+       return;
+     }
+     throw Error('Sign-in required');
    }catch{
      document.getElementById('rutin-auth-text').textContent='برای دسترسی به اطلاعات شخصی وارد حساب Google مجاز شو.';
      const btn=document.getElementById('rutin-login');btn.style.display='inline-block';btn.onclick=()=>location.assign('/api/auth/login');
@@ -72,7 +101,8 @@ body.rutin-authorized #rutin-auth{display:none}
 .stock-status{display:inline-block;margin-top:6px;padding:3px 8px;background:#eaf1eb;color:#28543a;border-radius:7px;font-size:11px;font-weight:700}
 .buy-filter{flex-wrap:wrap}.buy-toolbar{align-items:flex-start}
 @media(max-width:700px){.stock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.stock-panel>summary{align-items:flex-start;flex-direction:column}.stock-footer{align-items:flex-start;flex-direction:column}.buy-filter{width:100%}}
-</style><style>.buy-details p{font-size:12px;line-height:1.85}.buy-details p strong{color:#274e3a}.buy-options a{line-height:1.55;display:inline-flex;align-items:center}.buy-item .buy-size{line-height:1.7}</style></head><body><main><header class="top"><div class="brand">Rūtin<span style="font-weight:400;font-size:.6em;margin-right:8px">روتین</span></div><div class="pill">۱۷–۲۳ اکتبر ۲۰۲۶</div></header><div class="hero"><h1>غذا و خرید این هفته</h1><div class="muted">غذا، خرید و ثبت وزن</div></div><aside class="live" aria-live="polite"><div class="live-head"><span>برنامه امروز</span><span class="live-clock" id="liveClock">—</span></div><h2 id="liveTitle">در حال بارگذاری...</h2><p id="liveDescription">وعده بعدی و زمان خرید</p><div class="live-actions"><button id="jumpNow">مشاهده برنامه امروز</button><button class="ghost" id="showSettings">تنظیم یادآورها ⚙</button></div><div id="notificationHint"></div></aside><div class="settings" id="settingsPanel"><h3>یادآورهای شخصی</h3><p>اعلان‌ها در نسخه فعلی تا زمانی که صفحه باز باشد بررسی می‌شوند. برای هشدار مطمئن در پس‌زمینه، به نسخه منتشرشده با اعلان سروری نیاز است.</p><div class="settings-grid"><label>وعده اول<input type="time" id="firstTime" value="14:00"></label><label>شام<input type="time" id="secondTime" value="19:30"></label><label>یادآوری خرید<input type="time" id="buyTime" value="11:00"></label><label>چند دقیقه قبل؟<input type="number" min="0" max="120" step="5" id="leadTime" value="15"></label></div><div class="row"><label><input type="checkbox" id="remindersEnabled"> فعال‌بودن یادآورها</label><button class="outline" id="askNotifications">اجازه اعلان مرورگر</button><button class="primary" id="saveSettings">ذخیره تنظیمات</button></div><div class="status" id="notifyStatus"></div></div><nav class="tabs"><button class="active" data-tab="food">برنامه روزانه</button><button data-tab="buy">لیست خرید</button><button data-tab="weight">وزن و روند</button><button data-tab="expenses">هزینه‌ها</button></nav><section id="food" class="active"><div class="days" id="days"></div><div class="section-heading"><h2 id="dayTitle"></h2><span class="pill" id="dayDate"></span></div><div class="meal-grid" id="meals"></div><div class="callout">کربوهیدرات‌های نشاسته‌ای (نان، برنج و سیب‌زمینی) را مطابق ترجیح تو در وعده ظهر گذاشته‌ایم. کاهش وزن بیشتر به مجموع انرژی و کیفیت رژیم بستگی دارد، نه به ساعت جذب غذا.</div><div class="card"><strong>یادداشت امروز</strong><p class="note">اگر بین وعده‌ها گرسنه شدی، یک میوه یا کمی اسکیر بخور. این برنامه نقطه شروع است؛ اگر بی‌حال شدی یا گرسنگی شدید داشتی، باید اندازه وعده‌ها را افزایش دهیم.</p><div id="noteHistory" class="note" style="white-space:pre-wrap;padding:10px 0"></div><div class="field"><label for="daynote">یادداشت جدید (به ادامه یادداشت‌های همان روز اضافه می‌شود)</label><textarea id="daynote" placeholder="مثلاً: عصر گرسنه بودم؛ ۲۰ دقیقه پیاده‌روی کردم..."></textarea></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px"><span class="note">ثبت آزمایشی در همین مرورگر · اتصال شیت در حال آماده‌سازی</span><button class="outline" onclick="saveNote()">افزودن یادداشت</button></div></div></section><section id="buy"><div class="section-heading"><h2>خرید این هفته</h2><span id="progressText" class="pill"></span></div><div class="bar"><div id="progressBar"></div></div><div class="callout">شنبه مواد ماندگار و غذای دو روز اول، دوشنبه مواد تازه، چهارشنبه خرید تکمیلی تا جمعه. کالاهای از قبل موجود را علامت بزن و دوباره نخر.</div><div id="shopping"></div></section><section id="weight"><div class="section-heading"><h2>روند وزن من</h2><span class="pill">کیلوگرم</span></div><div class="card"><div class="weight-grid"><label class="field">تاریخ<input id="wdate" type="date" min="2026-10-01"></label><label class="field">وزن (کیلوگرم)<input id="wvalue" type="number" min="25" max="350" step="0.1" placeholder="مثلاً 85.5"></label></div><p class="note">برای مقایسه بهتر، صبح بعد از دستشویی و پیش از صبحانه وزن کن. نوسان روزانه طبیعی است.</p><button class="primary" id="saveWeight">ثبت وزن</button><div class="stats"><div class="stat"><b id="latest">—</b><small>آخرین وزن</small></div><div class="stat"><b id="change">—</b><small>تغییر از اولین ثبت</small></div><div class="stat"><b id="records">۰</b><small>تعداد ثبت‌ها</small></div></div></div><div class="card"><strong>نمودار تغییرات</strong><div id="chartHolder" style="margin-top:12px"></div><div class="weight-list" id="weightEntries"></div></div><div class="card"><strong>پشتیبان‌گیری</strong><p class="note">داده‌ها فقط داخل مرورگر این دستگاه ذخیره می‌شوند؛ با پاک‌کردن داده‌های سایت یا باز کردن فایل روی دستگاه دیگر، ممکن است از دست بروند.</p><button class="outline" id="export">دریافت نسخه پشتیبان (JSON)</button></div></section><section id="expenses"><div class="section-heading"><h2>هزینه‌های برنامه</h2><span class="pill">یورو · €</span></div>
+</style><style>.buy-details p{font-size:12px;line-height:1.85}.buy-details p strong{color:#274e3a}.buy-options a{line-height:1.55;display:inline-flex;align-items:center}.buy-item .buy-size{line-height:1.7}</style></head><body><main><header class="top"><div class="brand">Rūtin<span style="font-weight:400;font-size:.6em;margin-right:8px">روتین</span></div><div class="pill">۱۷–۲۳ اکتبر ۲۰۲۶</div></header><div class="hero"><h1>غذا و خرید این هفته</h1><div class="muted">غذا، خرید و ثبت وزن</div></div><aside class="live" aria-live="polite"><div class="live-head"><span>برنامه امروز</span><span class="live-clock" id="liveClock">—</span></div><h2 id="liveTitle">در حال بارگذاری...</h2><p id="liveDescription">وعده بعدی و زمان خرید</p><div class="live-actions"><button id="jumpNow">مشاهده برنامه امروز</button><button class="ghost" id="showSettings">تنظیم یادآورها ⚙</button></div><div id="notificationHint"></div></aside><div class="settings" id="settingsPanel"><h3>یادآورهای غذایی (Web Push)</h3><p>اعلان‌ها روی گوشی می‌آیند حتی وقتی اپ بسته است: آماده‌سازی زودتر، الان بپز، و لینک مستقیم طرز تهیه. تقویم هنوز در این نسخه نیست — فقط برنامهٔ غذا + ساعت.</p><div class="settings-grid"><label>وعده اول<input type="time" id="firstTime" value="14:00"></label><label>شام<input type="time" id="secondTime" value="19:30"></label><label>یادآوری خرید<input type="time" id="buyTime" value="11:00"></label><label>دقیقهٔ بافر قبل از پخت<input type="number" min="0" max="120" step="5" id="leadTime" value="15"></label></div><div class="row"><label><input type="checkbox" id="remindersEnabled"> فعال‌بودن اعلان‌های غذایی</label><button class="outline" id="askNotifications">فعال‌سازی اعلان موبایل</button><button class="primary" id="saveSettings">ذخیره و همگام‌سازی</button></div><div class="status" id="notifyStatus"></div></div>
+<div id="cookSheet" class="cook-sheet" aria-live="polite"><div class="cook-inner"><div class="cook-top"><span class="pill">یک اقدام · غذا</span><button type="button" id="cookClose">بستن</button></div><p class="cook-kicker" id="cookKicker"></p><h1 id="cookTitle"></h1><p class="cook-meta" id="cookMeta"></p><ol class="cook-steps" id="cookSteps"></ol><div class="cook-actions"><button type="button" class="primary" id="cookDone">انجام شد</button><button type="button" class="ghost" id="cookSnooze">۲۰ دقیقه بعد</button></div><p class="cook-status" id="cookStatus"></p></div></div><nav class="tabs"><button class="active" data-tab="food">برنامه روزانه</button><button data-tab="buy">لیست خرید</button><button data-tab="weight">وزن و روند</button><button data-tab="expenses">هزینه‌ها</button></nav><section id="food" class="active"><div class="days" id="days"></div><div class="section-heading"><h2 id="dayTitle"></h2><span class="pill" id="dayDate"></span></div><div class="meal-grid" id="meals"></div><div class="callout">کربوهیدرات‌های نشاسته‌ای (نان، برنج و سیب‌زمینی) را مطابق ترجیح تو در وعده ظهر گذاشته‌ایم. کاهش وزن بیشتر به مجموع انرژی و کیفیت رژیم بستگی دارد، نه به ساعت جذب غذا.</div><div class="card"><strong>یادداشت امروز</strong><p class="note">اگر بین وعده‌ها گرسنه شدی، یک میوه یا کمی اسکیر بخور. این برنامه نقطه شروع است؛ اگر بی‌حال شدی یا گرسنگی شدید داشتی، باید اندازه وعده‌ها را افزایش دهیم.</p><div id="noteHistory" class="note" style="white-space:pre-wrap;padding:10px 0"></div><div class="field"><label for="daynote">یادداشت جدید (به ادامه یادداشت‌های همان روز اضافه می‌شود)</label><textarea id="daynote" placeholder="مثلاً: عصر گرسنه بودم؛ ۲۰ دقیقه پیاده‌روی کردم..."></textarea></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px"><span class="note">ثبت آزمایشی در همین مرورگر · اتصال شیت در حال آماده‌سازی</span><button class="outline" onclick="saveNote()">افزودن یادداشت</button></div></div></section><section id="buy"><div class="section-heading"><h2>خرید این هفته</h2><span id="progressText" class="pill"></span></div><div class="bar"><div id="progressBar"></div></div><div class="callout">شنبه مواد ماندگار و غذای دو روز اول، دوشنبه مواد تازه، چهارشنبه خرید تکمیلی تا جمعه. کالاهای از قبل موجود را علامت بزن و دوباره نخر.</div><div id="shopping"></div></section><section id="weight"><div class="section-heading"><h2>روند وزن من</h2><span class="pill">کیلوگرم</span></div><div class="card"><div class="weight-grid"><label class="field">تاریخ<input id="wdate" type="date" min="2026-10-01"></label><label class="field">وزن (کیلوگرم)<input id="wvalue" type="number" min="25" max="350" step="0.1" placeholder="مثلاً 85.5"></label></div><p class="note">برای مقایسه بهتر، صبح بعد از دستشویی و پیش از صبحانه وزن کن. نوسان روزانه طبیعی است.</p><button class="primary" id="saveWeight">ثبت وزن</button><div class="stats"><div class="stat"><b id="latest">—</b><small>آخرین وزن</small></div><div class="stat"><b id="change">—</b><small>تغییر از اولین ثبت</small></div><div class="stat"><b id="records">۰</b><small>تعداد ثبت‌ها</small></div></div></div><div class="card"><strong>نمودار تغییرات</strong><div id="chartHolder" style="margin-top:12px"></div><div class="weight-list" id="weightEntries"></div></div><div class="card"><strong>پشتیبان‌گیری</strong><p class="note">داده‌ها فقط داخل مرورگر این دستگاه ذخیره می‌شوند؛ با پاک‌کردن داده‌های سایت یا باز کردن فایل روی دستگاه دیگر، ممکن است از دست بروند.</p><button class="outline" id="export">دریافت نسخه پشتیبان (JSON)</button></div></section><section id="expenses"><div class="section-heading"><h2>هزینه‌های برنامه</h2><span class="pill">یورو · €</span></div>
 <div class="expense-stats"><div class="card"><small>هزینه مرتبط</small><strong id="xpRelevant">€0.00</strong></div><div class="card"><small>کل رسیدها</small><strong id="xpTotal">€0.00</strong></div><div class="card"><small>خریدهای نامرتبط</small><strong id="xpOther">€0.00</strong></div></div>
 <div class="card"><h3 style="margin:0 0 10px">ثبت رسید خرید</h3><p class="note">از رسید عکس بگیر و اقلامش را پیش از ثبت تأیید کن. تشخیص خودکار متن عکس هنوز فعال نیست؛ برای استخراج اقلام می‌توانی عکس را در گفت‌وگوی ChatGPT بفرستی و نتیجه را اینجا وارد کنی.</p>
 <div class="xp-form"><label class="field">تاریخ خرید<input id="xpDate" type="date"></label><label class="field">فروشگاه<input id="xpShop" placeholder="REWE / EDEKA / Lidl"></label><label class="field">مبلغ کل رسید (€)<input id="xpTotalInput" type="number" step="0.01" min="0" placeholder="0.00"></label><label class="field">عکس رسید<input id="xpPhoto" type="file" accept="image/*" capture="environment"></label></div><img id="xpPreview" class="xp-preview" alt="پیش‌نمایش رسید" hidden><p class="note" id="xpPhotoStatus">در نسخه آزمایشی Vercel عکس رسید به Google Drive منتقل نمی‌شود.</p>
@@ -231,31 +261,124 @@ function fmt(n){return Number(n).toFixed(1)}function renderWeight(){const arr=[.
  const tIn=['firstTime','secondTime','buyTime','leadTime'];
  [settings.first,settings.second,settings.buy,settings.lead].forEach((v,i)=>$('#'+tIn[i]).value=v);
  $('#remindersEnabled').checked=!!settings.enabled;
- const pad=n=>String(n).padStart(2,'0');
  const clock=()=>{const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Berlin',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23',weekday:'short'}).formatToParts(new Date());return Object.fromEntries(parts.map(x=>[x.type,x.value]))};
  const mins=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));
- const toFa=n=>new Intl.NumberFormat('fa-IR').format(n);
- const dIndex=x=>dates.indexOf([x.year,x.month,x.day].join('-'));
+ const weekdayIndex=p=>({Sat:0,Sun:1,Mon:2,Tue:3,Wed:4,Thu:5,Fri:6}[p.weekday]??0);
+ const dIndex=x=>{const iso=[x.year,x.month,x.day].join('-');return dates.includes(iso)?dates.indexOf(iso):weekdayIndex(x)};
  function go(tab){const b=document.querySelector('[data-tab="'+tab+'"]');if(b)b.click()}
  function renderLive(){const p=clock(),current=Number(p.hour)*60+Number(p.minute),i=dIndex(p),isBuy=[0,2,4].includes(i);$('#liveClock').textContent=[p.day,p.month,p.year].join('/')+' · '+p.hour+':'+p.minute;
-  let title='برنامه هفته در دسترس است',description='روز موردنظر را برای مشاهده وعده‌ها انتخاب کن',action='food';
-  if(i<0){const start=[2026,10,17],end=[2026,10,23];title='نمایش برنامه ۱۷ تا ۲۳ اکتبر';description='این برنامه مربوط به یک هفته مشخص است؛ زمان‌بندی اعلان‌ها فقط در همان هفته فعال است';}
-  else if(isBuy && current<mins(settings.buy)+80){title='امروز روز خرید است';description='خرید '+DAYS[i]+' · ساعت پیشنهادی '+settings.buy+' · چک‌لیست این نوبت آماده است';action='buy'}
-  else if(current<mins(settings.first)){title='وعده اول ساعت '+settings.first;description='امروز '+DAYS[i]+' است. وعده ظهر را در برنامه روزانه ببین.'}
-  else if(current<mins(settings.second)){title=current<mins(settings.first)+75?'الان زمان وعده اول است':'وعده دوم ساعت '+settings.second;description=meals[i][current<mins(settings.first)+75?0:1]}
-  else {title=current<mins(settings.second)+90?'الان زمان شام است':'برنامه غذایی امروز کامل شد';description=current<mins(settings.second)+90?meals[i][1]:'برای فردا آماده شو؛ نیازهای خرید را بررسی کن'}
-  $('#liveTitle').textContent=title;$('#liveDescription').textContent=description;$('#jumpNow').textContent=action==='buy'?'مشاهده خرید امروز':'مشاهده برنامه امروز';$('#jumpNow').onclick=()=>{if(i>=0){index=i;renderDay()}go(action)};
+  let title='برنامه غذا آماده است',description='یک اقدام بعدی از اعلان می‌آید؛ اینجا خلاصهٔ امروز است',action='food';
+  if(isBuy && current<mins(settings.buy)+80){title='امروز خرید مواد';description='ساعت پیشنهادی '+settings.buy+' · چک‌لیست خرید '+DAYS[i];action='buy'}
+  else if(current<mins(settings.first)){title='وعده اول ساعت '+settings.first;description=meals[i][0]+' · اگر اعلان زودتر آمد، همان را باز کن'}
+  else if(current<mins(settings.first)+75){title='الان وقت وعده اول است';description=meals[i][0];action='food'}
+  else if(current<mins(settings.second)){title='وعده دوم ساعت '+settings.second;description=meals[i][1]}
+  else if(current<mins(settings.second)+90){title='الان وقت شام است';description=meals[i][1]}
+  else {title='وعده‌های امروز تمام شد';description='برای فردا، اعلان‌ها خودش خبر می‌دهد'}
+  $('#liveTitle').textContent=title;$('#liveDescription').textContent=description;
+  $('#jumpNow').textContent=action==='buy'?'مشاهده خرید امروز':'باز کردن طرز تهیه';
+  $('#jumpNow').onclick=()=>{
+   index=i;renderDay();
+   if(action==='buy'){go('buy');return}
+   const iso=[p.year,p.month,p.day].join('-');
+   const slot=current>=mins(settings.second)?1:0;
+   openCook(iso,slot);
+  };
  }
  function setStatus(msg){$('#notifyStatus').textContent=msg}
- function canNotify(){return ('Notification' in window)&&window.isSecureContext}
+ function urlBase64ToUint8Array(base64String){const padding='='.repeat((4-base64String.length%4)%4);const base64=(base64String+padding).replace(/-/g,'+').replace(/_/g,'/');const raw=atob(base64);const out=new Uint8Array(raw.length);for(let i=0;i<raw.length;++i)out[i]=raw.charCodeAt(i);return out}
+ async function ensureSW(){if(!('serviceWorker' in navigator))throw Error('Service Worker پشتیبانی نمی‌شود');return navigator.serviceWorker.register('/sw.js')}
+ async function subscribePush(){
+  if(!window.isSecureContext)throw Error('اعلان فقط روی HTTPS کار می‌کند');
+  await ensureSW();
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted')throw Error('اجازهٔ اعلان داده نشد');
+  const reg=await navigator.serviceWorker.ready;
+  const keyRes=await fetch('/api/push/vapid-public-key',{credentials:'same-origin'});
+  const keyJson=await keyRes.json();
+  if(!keyRes.ok)throw Error(keyJson.error||'کلید VAPID در دسترس نیست');
+  let sub=await reg.pushManager.getSubscription();
+  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:urlBase64ToUint8Array(keyJson.publicKey)});
+  const body={subscription:sub.toJSON(),settings:{first:settings.first,second:settings.second,buy:settings.buy,lead:settings.lead,enabled:true}};
+  const save=await fetch('/api/push/subscribe',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const saved=await save.json();
+  if(!save.ok)throw Error(saved.error||'ذخیره اشتراک ناموفق');
+  return true;
+ }
+ async function unsubscribePush(){
+  try{
+   const reg=await navigator.serviceWorker.ready;
+   const sub=await reg.pushManager.getSubscription();
+   if(sub)await sub.unsubscribe();
+   await fetch('/api/push/unsubscribe',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});
+  }catch(e){console.warn(e)}
+ }
+ function readCookParams(){const q=new URLSearchParams(location.search);return {cook:q.get('cook'),slot:q.get('slot'),tab:q.get('tab')}}
+ function mealIndexForDate(iso){if(dates.includes(iso))return dates.indexOf(iso);const [y,m,d]=iso.split('-').map(Number);const p=berlinPartsFor(new Date(Date.UTC(y,m-1,d,12,0)));return weekdayIndex(p)}
+ function berlinPartsFor(date){const parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Berlin',weekday:'short'}).formatToParts(date);return Object.fromEntries(parts.map(x=>[x.type,x.value]))}
+ let cookCtx=null;
+ function openCook(iso,slot){
+  const s=Number(slot);if(!iso||![0,1].includes(s))return;
+  const i=mealIndexForDate(iso);const g=MEAL_GUIDES[i][s];
+  cookCtx={date:iso,slot:s,id:iso+':meal'+s};
+  $('#cookKicker').textContent=DAYS[i]+' · '+(s?'وعده دوم · شام':'وعده اول · ظهر');
+  $('#cookTitle').textContent=meals[i][s];
+  $('#cookMeta').textContent='حدود '+g.time+' · یک اقدام: همین را بپز';
+  $('#cookSteps').innerHTML=g.steps.map(x=>'<li>'+x+'</li>').join('')+(g.tip?'<li style="list-style:none;margin-top:10px;color:#718176;font-size:12px">'+g.tip+'</li>':'');
+  $('#cookStatus').textContent='';
+  $('#cookSheet').classList.add('open');
+  history.replaceState(null,'','?cook='+encodeURIComponent(iso)+'&slot='+s);
+ }
+ function closeCook(){
+  $('#cookSheet').classList.remove('open');cookCtx=null;
+  const q=new URLSearchParams(location.search);q.delete('cook');q.delete('slot');
+  const next=q.toString();history.replaceState(null,'',next?'?'+next:location.pathname);
+ }
+ async function ackCook(kind){
+  if(!cookCtx)return;
+  $('#cookStatus').textContent='در حال ثبت…';
+  try{
+   const r=await fetch('/api/push/ack',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:cookCtx.id,kind})});
+   const j=await r.json();
+   if(!r.ok)throw Error(j.error||'خطا');
+   $('#cookStatus').textContent=kind==='done'?'ثبت شد — اعلان تکراری برای این وعده نمی‌آید.':('snooze تا ۲۰ دقیقه دیگر');
+   if(kind==='done')setTimeout(closeCook,700);
+  }catch(e){$('#cookStatus').textContent=e.message}
+ }
+ $('#cookClose').onclick=closeCook;
+ $('#cookDone').onclick=()=>ackCook('done');
+ $('#cookSnooze').onclick=()=>ackCook('snooze');
  $('#showSettings').onclick=()=>$('#settingsPanel').classList.toggle('visible');
- $('#saveSettings').onclick=()=>{const lead=Math.max(0,Math.min(120,Number($('#leadTime').value)||0));settings={first:$('#firstTime').value||'14:00',second:$('#secondTime').value||'19:30',buy:$('#buyTime').value||'11:00',lead,enabled:$('#remindersEnabled').checked};state.reminders=settings;persist();renderLive();setStatus('تنظیمات ذخیره شدند.')};
- $('#askNotifications').onclick=async()=>{if(!canNotify()){setStatus('این مرورگر یا شیوه باز کردن فایل اجازه اعلان سیستم را نمی‌دهد. برای بهترین نتیجه سایت را روی HTTPS باز کن.');return}const result=await Notification.requestPermission();setStatus(result==='granted'?'اجازه اعلان داده شد. صفحه را هنگام دریافت یادآورها باز نگه دار.':'اعلان سیستم فعال نشده است.');};
- const sent=new Set();
- function tick(){renderLive();const p=clock(),i=dIndex(p);if(i<0||!settings.enabled)return;const m=Number(p.hour)*60+Number(p.minute),events=[{id:'meal1',time:settings.first,title:'وعده اول',body:meals[i][0]},{id:'meal2',time:settings.second,title:'وعده دوم',body:meals[i][1]}];if([0,2,4].includes(i))events.push({id:'buy',time:settings.buy,title:'امروز روز خرید است',body:'چک‌لیست خرید '+DAYS[i]+' را باز کن.'});for(const e of events){const key=dates[i]+':'+e.id+':'+e.time+':'+settings.lead,when=mins(e.time)-settings.lead;if(m>=when&&m<when+2&&!sent.has(key)){sent.add(key);if(canNotify()&&Notification.permission==='granted'){try{new Notification(e.title,{body:e.body,tag:key})}catch(err){}}else{const hint=$('#notificationHint');hint.style.display='block';hint.textContent='⏰ '+e.title+' — '+e.body;}}}}
- if(!canNotify())setStatus('اعلان سیستم روی فایل محلی ممکن است در دسترس نباشد؛ وضعیت زمان‌بندی در بالای صفحه همیشه نمایش داده می‌شود.');
- tick();setInterval(tick,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
- if('serviceWorker' in navigator && location.protocol==='https:')navigator.serviceWorker.register('./sw.js').catch(()=>{});
+ $('#saveSettings').onclick=async()=>{
+  const lead=Math.max(0,Math.min(120,Number($('#leadTime').value)||0));
+  settings={first:$('#firstTime').value||'14:00',second:$('#secondTime').value||'19:30',buy:$('#buyTime').value||'11:00',lead,enabled:$('#remindersEnabled').checked};
+  state.reminders=settings;persist();renderLive();
+  try{
+   if(settings.enabled){await subscribePush();setStatus('اعلان موبایل فعال و تنظیمات روی سرور ذخیره شد.');}
+   else {await unsubscribePush();setStatus('اعلان‌ها خاموش شدند.');}
+  }catch(e){setStatus('ذخیره محلی شد؛ همگام‌سازی اعلان: '+e.message)}
+ };
+ $('#askNotifications').onclick=async()=>{
+  try{
+   $('#remindersEnabled').checked=true;
+   settings={...settings,enabled:true,first:$('#firstTime').value||settings.first,second:$('#secondTime').value||settings.second,buy:$('#buyTime').value||settings.buy,lead:Math.max(0,Math.min(120,Number($('#leadTime').value)||settings.lead))};
+   state.reminders=settings;persist();
+   await subscribePush();
+   setStatus('اعلان موبایل فعال شد. اپ را به Home Screen اضافه کن تا push مطمئن‌تر باشد.');
+  }catch(e){setStatus(e.message)}
+ };
+ function bootDeepLink(){
+  const {cook,slot,tab}=readCookParams();
+  if(tab==='buy')go('buy');
+  if(cook!=null&&slot!=null)openCook(cook,slot);
+ }
+ navigator.serviceWorker&&navigator.serviceWorker.addEventListener('message',(ev)=>{
+  if(ev.data&&ev.data.type==='rutin-open'&&ev.data.url){location.assign(ev.data.url)}
+ });
+ if('serviceWorker' in navigator&&window.isSecureContext)ensureSW().catch(()=>{});
+ renderLive();setInterval(renderLive,30000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)renderLive()});
+ bootDeepLink();
+ if(!window.isSecureContext)setStatus('برای Web Push باید سایت را روی HTTPS (نسخهٔ Vercel) باز کنی.');
+ else if(settings.enabled)setStatus('یادآورها فعال‌اند. اگر اعلان نمی‌آید، دوباره «فعال‌سازی اعلان موبایل» را بزن.');
 })();
 </script><script>
 (function(){

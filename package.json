@@ -1,0 +1,8 @@
+{
+  "name": "rutin",
+  "private": true,
+  "description": "Rūtin — proactive meal-habit companion",
+  "dependencies": {
+    "web-push": "^3.6.7"
+  }
+}
